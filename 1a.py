@@ -2,7 +2,8 @@
 
 # numpy 나중에
 
-# targets (x, y) pairs
-targets = [[1,1],[2,2],[3,3],[4,4],[5,5]]
-print ("targets:", targets) # python3
+# trainings (x, y) pairs
+trainings = [[1,2],[3,6],[7,14],[2,4],[4,8]]
+
+print ("trainings:", trainings) # python3
 

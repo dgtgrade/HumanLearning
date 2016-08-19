@@ -1,13 +1,15 @@
 #!/usr/bin/python
 
-# targets (x, y) pairs
+# trainings (x, y) pairs
 
 import matplotlib.pyplot as plt
 
-targets_X = [row[0] for row in targets]
-targets_Y = [row[1] for row in targets]
+trainings = [[1,2],[3,6],[7,14],[2,4],[4,8]]
 
-plt.plot(targets_X, targets_Y, "o")
-plt.axis([0,10,0,10])
+trainings_X = [row[0] for row in trainings]
+trainings_Y = [row[1] for row in trainings]
+
+plt.plot(trainings_X, trainings_Y, "o")
+plt.axis([0,20,0,20])
 plt.show()
 
