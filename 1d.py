@@ -1,46 +1,52 @@
 #!/usr/bin/python
 
 import matplotlib.pyplot as plt
+
+# trainings (x, y) pairs
+trainings = [[1,2],[3,6],[7,14],[2,4],[4,8]]
+
+trainings_X = [row[0] for row in trainings]
+trainings_Y = [row[1] for row in trainings]
+
 import random
 import time
 
-# targets (x, y) pairs
-targets = [[1,1],[2,2],[3,3],[4,4],[5,5]]
+# 가정: y = ax + b
 
-targets_X = [row[0] for row in targets]
-targets_Y = [row[1] for row in targets]
-
-# 가정: y = ax
-
-plt.ion()
-plt.show()
+MAX = 10000
+best_a = -MAX
+best_b = -MAX
+err_min = MAX^3
+count = 0
 
 while True:
 
-    #a = random.random()
-    a = random.uniform(-10,10)
+    a = random.uniform(-MAX,MAX)
+    b = random.uniform(-MAX,MAX)
 
     err = 0
-
-    plt.axis([-10,10,-10,10])
-    plt.plot(targets_X, targets_Y, marker="o", color="blue", linestyle="None")
+    count = count + 1
 
     # 오차
-    for i, t_x in enumerate(targets_X):
+    for i, t_x in enumerate(trainings_X):
 
-        y = a * t_x # 가정값
+        y = a * t_x + b # 가정값
 
-        t_y = targets_Y[i] # 실제값
+        t_y = trainings_Y[i] # 실제값
 
         err += abs(y - t_y) # 오차값
 
-        plt.plot(t_x, y, marker="D", color="green")
+    if err < err_min:
+        err_min = err
+        best_a = a
+        best_b = b
 
-    errstr = "a="+str(int(a*100)/100)+"\n"+"err="+str(int(err*100)/100)
-    plt.text(-8,5,errstr,size=24)
-    plt.draw()
-    plt.waitforbuttonpress(timeout=-1)
-    plt.clf()
+    if count % 10000 == 0 :
+        print ("###count=", count)
+        print ("a=",a,"b=",b,"err=",err)
+        print ("    ", "best_a=",best_a,"best_b=",best_b,"err_min=",err_min)
+
+#    time.sleep(0.01)
 
 
 

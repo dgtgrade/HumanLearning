@@ -2,33 +2,34 @@
 
 import matplotlib.pyplot as plt
 
-# targets (x, y) pairs
-targets = [[1,1],[2,2],[3,3],[4,4],[5,5]]
+# trainings (x, y) pairs
+trainings = [[1,2],[3,6],[7,14],[2,4],[4,8]]
 
-targets_X = [row[0] for row in targets]
-targets_Y = [row[1] for row in targets]
+trainings_X = [row[0] for row in trainings]
+trainings_Y = [row[1] for row in trainings]
 
 import random
 import time
 
-# 가정: y = ax
+# 가정: y = ax + b
 
 while True:
 
-    a = random.random()
+    a = random.uniform(0,10)
+    b = random.uniform(0,10)
 
     err = 0
 
     # 오차
-    for i, t_x in enumerate(targets_X):
+    for i, t_x in enumerate(trainings_X):
 
-        y = a * t_x # 가정값
+        y = a * t_x + b # 가정값
 
-        t_y = targets_Y[i] # 실제값
+        t_y = trainings_Y[i] # 실제값
 
         err += abs(y - t_y) # 오차값
 
-    print ("a=",a,"err=",err)
+    print ("a=",a,"b=",b,"err=",err)
 
     time.sleep(1)
 
