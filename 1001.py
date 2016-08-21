@@ -1,6 +1,20 @@
-import numpy as np
-
 # 딱히 참고한 코드 없음
+#
+# numpy 외에 아무런 라이브러리도 사용하지 않았음
+# python 3.5 환경에서 작성 하였음
+#
+# 실험용으로 대충 빨리 만들어본 코드라서 깔끔하지 않음
+# 게다가 python 사용한지 1주일도 안 되었고, 
+# numpy 오늘 처음 써봐서 특별히 이상한 코드가 많을 것으로 추정됨
+#
+# Back Propagation 외에 요구되는 배경 지식은 없음
+# 총 200줄 이하이고, 코멘트 및 디버깅용 코드등을 제외하면 150줄 이하임
+#
+# 작성자:
+# https://facebook.com/dgtgrade
+# dgtgrade@gmail.com
+
+import numpy as np
 
 # 소수점 출력 설정
 float_formatter = lambda x: "%+.6f" % x
