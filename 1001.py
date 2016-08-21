@@ -58,6 +58,14 @@ def t_XOR():
     Y = np.array([[0],[1],[1],[0]])
     return (X, Y, X, Y)
 
+# 목표 함수 t = x^3+3*sin(x)^2-10 에 따른 정답표 만들기
+def t_hard():
+    X_train = np.arange(-5.5,5.5,0.5).reshape(-1,1)
+    Y_train = X_train**3 + 3*np.sin(X_train)**2-10
+    X_test = np.arange(-4.3,4.5,2.7).reshape(-1,1)
+    Y_test = X_test**3 + 3*np.sin(X_test)**2-10
+    return (X_train, Y_train, X_test, Y_test)
+
 (X_train, Y_train, X_test, Y_test) = t_sqr()
 
 N_IN = X_train.shape[1] # 입력 레이어 노드수
