@@ -1,5 +1,7 @@
 import numpy as np
 
+# 딱히 참고한 코드 없음
+
 # 소수점 출력 설정
 float_formatter = lambda x: "%+.6f" % x
 np.set_printoptions(formatter={'float_kind':float_formatter})
