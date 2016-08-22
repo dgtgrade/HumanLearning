@@ -54,18 +54,22 @@ def t(t_str,X):
     return Y
     
 #t_str = "X*X"
-#t_str = "8*X**2-X**3"
-t_str = "10*np.sin(X)+(X-4)**2-10"
+t_str = "8*X**2-X**3"
+#t_str = "10*np.sin(X)+(X-4)**2-10"
+
+# 입력값 범위
+x_START = -5.0
+x_END = 10.0
 
 # 학습용 정답 데이터
-X_train = np.arange(-5.0,10.5,0.5).reshape(-1,1)
+X_train = np.linspace(x_START,x_END,num=20).reshape(-1,1)
 Y_train = t(t_str,X_train)
 # 시험용 정답 데이터
-X_test = np.arange(-5.0,10.0,0.1).reshape(-1,1)
+X_test = np.linspace(x_START,x_END,num=100).reshape(-1,1)
 Y_test = t(t_str,X_test)
 # 고정밀 정답 데이터 
 # 그래프 상에 표시하기 위한 것
-X_t = np.arange(-5.0,10.0,0.01).reshape(-1,1)
+X_t = np.linspace(x_START,x_END,num=200).reshape(-1,1)
 Y_t = t(t_str,X_t)
 
 N_IN = X_train.shape[1] # 입력 레이어 노드수
@@ -110,9 +114,9 @@ def back_propagation(a1, z2, a2,a3, thetas,y, LR):
     new_thetas = thetas.copy()
     (new_th1, new_th2) = th_split(new_thetas)
 
-# 마지막 레이어에 activation 함수 있을때
-#    delta3 = (a3 - y)*d_sigmoid(a3) 
-# 없을때
+    # 마지막 레이어에 activation 함수 있을때
+    #delta3 = (a3 - y)*d_sigmoid(a3) 
+    # 없을때
     delta3 = (a3 - y)
     delta2 = np.dot(new_th2.T, delta3) * d_sigmoid(a2)
 
@@ -191,7 +195,6 @@ while True:
             thetas = ngd_thetas
 
     # 시험 치고 그래프 업데이트
-
     if DOTEST:
 
         A3 = np.empty([m_test,1])
