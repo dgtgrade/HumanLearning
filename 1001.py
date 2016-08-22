@@ -11,8 +11,9 @@
 # 총 200줄 이하이고, 코멘트 및 디버깅용 코드등을 제외하면 150줄 이하임
 #
 # 작성자:
-# https://facebook.com/dgtgrade
-# dgtgrade@gmail.com
+# Facebook: https://facebook.com/dgtgrade
+# Youtube: https://youtube.com/channel/UCEdT99nAs8nalv6Mafs9RiA 
+# email: dgtgrade@gmail.com
 
 import numpy as np
 
