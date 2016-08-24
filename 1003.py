@@ -111,6 +111,18 @@ x_END = 10.0
 # 학습용 정답 데이터
 X_train = np.linspace(x_START,x_END,num=40).reshape(-1,1)
 Y_train = t(t_str,X_train)
+
+# 일부 구간을 제외 하는 경우
+MASKING=False
+if MASKING:
+    rowmask = np.ones(np.size(X_train),dtype=bool)
+    #rowmask[:int(len(X_train)*0.1)][:]=False #처음 제외
+    #rowmask[int(len(X_train)*0.45):int(len(X_train)*0.55)]=False #중간 제외
+    rowmask[int(len(X_train)*0.9):]=False #끝 제외
+
+    X_train = X_train[rowmask,:]
+    Y_train = Y_train[rowmask,:]
+
 # 시험용 정답 데이터
 X_test = np.linspace(x_START,x_END,num=100).reshape(-1,1)
 Y_test = t(t_str,X_test)
@@ -132,7 +144,7 @@ RSIZE = 1 # 초기 랜덤값의 범위 설정
 np.random.seed(20160823) # 디버깅 및 논의를 쉽게 하기 위해서 지정
 thetas = RSIZE * np.random.random_sample((N_IN+1)*N_HD1+(N_HD1+1)*N_OUT)
 
-LR = 0.02 / m_train # Learning Rate
+LR = 0.01 / m_train # Learning Rate
 
 def th_split(thetas):
 
@@ -267,6 +279,8 @@ while True:
             c="green", marker="o", markersize=5.0, linewidth=5.0)
         ax.plot(X_train, Y_train, 
             c="blue", marker="d", markersize=20.0, linestyle='None')
+        if MASKING:
+            [ax.axvline(_x,c="blue", linewidth=5.0) for _x in X_train]
         ax.plot(X_test, A3, 
             c="red", marker="o", markersize=10.0, linestyle='None')
 
