@@ -131,14 +131,24 @@ for i in range(m_part):
 #
 # 간단한 것부터 계산
 #
+# 아래 모든 P들에 스무딩 적용함
+# 즉 아래 모든 P들은 항상 0보다는 큼
+# 게다가 1보다도 작음
+# 아래쪽 테스트 부분 코드의 p_1ohx, p_0ohx, p_1x, p_0x 값들이 
+# 0이 될 수 없게 됨
+# https://en.wikipedia.org/wiki/Additive_smoothing
+#
 #   P(H)   = N(H) / N_TOTAL
-P_H = N_H/N_TOTAL
+#       스무딩: (N(H)+1) / (N_TOTAL+DIGITS)
+P_H = (N_H+1)/(N_TOTAL+DIGITS)
 #   P(E)   = N(E) / N_TOTAL
-P_E = N_E/N_TOTAL
+#       스무딩: (N(E)+1) / (N_TOTAL+2)
+P_E = (N_E+1)/(N_TOTAL+2)
 #   P(E|H) = N(E and H) / N(H)
+#       스무딩: (N(E and H)+1) / ( N(H)+2)
 P_EoH = np.zeros((DIGITS,IMGSIZE,IMGSIZE))
 for i in range(DIGITS):
-    P_EoH[i] = N_EnH[i] / N_H[i]
+    P_EoH[i] = (N_EnH[i]+1) / (N_H[i]+2)
 
 if False:
     print (P_H)
@@ -186,7 +196,6 @@ for i in range(m_test):
 
         p_0oh = (1.0-img)*(1-P_EoH[j]) # 비어있는 Evidence
         p_0ohx = p_0oh[img<=CON].prod()
-#        p_0ohx=1.0
 
         # P(E1,..,En)
         p_1 = (img)*P_E # 채워져있는 Evidence
@@ -194,14 +203,10 @@ for i in range(m_test):
 
         p_0 = (1.0-img)*(1-P_E) # 비어있는 Evidence
         p_0x = p_0[img<=CON].prod()
-        p_0x=1.0
-
-        # 혹시 0.0이 나오면 어떻게 처리하면 좋을까?
-        assert p_1x * p_0x > 0.0
 
         P_HoE[j] = P_H[j] * \
             p_1ohx * p_0ohx / \
-            (p_1x * p_0x)
+            ((p_1x * p_0x))
 
             
     ds = np.argsort(P_HoE)[-5:][::-1]
