@@ -22,9 +22,10 @@ np.random.seed(20160920) # 디버깅 및 논의를 쉽게 하기 위해서 지�
 #
 class NN:
 
-    LR = 1.0 # Learning Rate
-    DORATE = 0.5 # Dropout Rate
-    MOMENTUM = 1.0 # Momentum
+    LR = 0.2 # Learning Rate
+    DORATE = 0.0 # Dropout Rate
+    MOMENTUM = 0.5 # Momentum
+    LAMBDA = 2.0 # L2 Regularization Parameter
 
     ths = None # thetas
     nas = None # a of each nodes / without bias node
@@ -34,12 +35,15 @@ class NN:
     # momentum 이용시 사용하는 이전 이터레이션의 ths 변화량
     ths_diff = None
     ths_l = None # 레이어별 시작 위치
+    ths_b = None # bias node 연결 위치 모음
 
     n_nodes = None
     n_nodes_l = None # 레이어별 시작 위치
 
+    m = 0 # L2 Regularization 등에서 사용하는 전체 학습 예제수
+
     # n_nodes = [입력 노드수, 히든 레이어 #1 노드수, ..., 출력 노드수]
-    def __init__(self,n_nodes):
+    def __init__(self,n_nodes,m):
         self.n_nodes = n_nodes
         self.nzs = np.zeros(sum(n_nodes))
         self.nas = np.zeros(sum(n_nodes))
@@ -56,8 +60,15 @@ class NN:
             self.n_nodes_l[l] = sum(n_nodes[0:l])
 
         self.ths_l = np.empty(len(n_nodes)).astype(np.int)
+        self.ths_b = np.zeros(len(self.ths)).astype(np.bool)
         for l in range(len(self.ths_l)):
             self.ths_l[l] = sum((n_nodes[0:l]+1)*n_nodes[1:l+1])
+            if (l<len(self.ths_l)-1):
+                self.ths_b[self.ths_l[l]+\
+                        np.arange(n_nodes[l+1])*n_nodes[l]] = True
+
+        # 전체 학습 예제수
+        self.m = m
 
     # 드랍아웃될 유닛들 선택
     # 이미 설정되어 있으면 재선택
@@ -68,16 +79,6 @@ class NN:
         dropout[0:n_nodes[0]]=False # no dropout units in first layer
         dropout[-n_nodes[-1]:]=False # no dropout units in last layer
         self.dropout = dropout
-
-    def cost(self,y):
-
-        n_nodes = self.n_nodes
-        assert len(y) == n_nodes[-1]
-        oas = self.nas[-n_nodes[-1]:]   # output node_as
-        #cost = np.sum((oas-y)**2/2.0)  # quadratic
-        cost = -np.sum(y*np.log(oas)+(1-y)*np.log(1-oas)) # cross-entropy
-
-        return cost
 
     def ff(self,x,testing=False):
 
@@ -90,7 +91,7 @@ class NN:
         pl_nas = np.append([1.0],self.nas[0:n_nodes[0]])
         for l in range(1,len(n_nodes)):
 
-            thsM = self.__get_thsM(l)
+            thsM = self.__get_thsM(l-1)
             nzs = self.__get_nzs(l)
             nas = self.__get_nas(l)
             dropout = self.__get_dropout(l)
@@ -118,7 +119,7 @@ class NN:
         # pl_ : of previous (left) layer
         for l in range(len(n_nodes)-1,0,-1):
 
-            new_thsM = self.__get_thsM(l,new_ths_all)
+            new_thsM = self.__get_thsM(l-1,new_ths_all)
             dropout = self.__get_dropout(l)
             nas = self.__get_nas(l)*np.invert(dropout)
 
@@ -126,7 +127,7 @@ class NN:
                 #deltas = (nas-y)*nas*(1.0-nas) # quadratic
                 deltas = (nas-y) # cross-entropy
             else:
-                nl_thsM = self.__get_thsM(l+1,ths_all)
+                nl_thsM = self.__get_thsM(l,ths_all)
                 deltas = np.dot(nl_thsM[:,1:].T,nl_deltas)*\
                         nas*(1.0-nas)
 
@@ -138,7 +139,7 @@ class NN:
             new_thsM -= self.LR*np.dot(deltas.reshape(len(deltas),-1),
                     pl_nas.reshape(-1,len(pl_nas)))
 
-            new_ths = self.__get_ths(l,new_ths_all)
+            new_ths = self.__get_ths(l-1,new_ths_all)
             new_ths[:] = new_thsM.flatten()
 
             nl_deltas = deltas
@@ -151,10 +152,13 @@ class NN:
         self.ths_diff = ths_diff
         return mmt_ths
 
+    def __L2_ths(self):
+        return self.LR*self.LAMBDA/self.m*\
+                self.ths*np.invert(self.ths_b)
 
     def bp(self,x,y):
         self.ff(x)
-        new_ths = self.__bp(y)
+        new_ths = self.__bp(y) - self.__L2_ths()
         self.ths = new_ths + self.__bp_momentum(new_ths)
 
     def batch_bp(self,X,Y):
@@ -168,6 +172,8 @@ class NN:
             new_ths += self.__bp(y)
 
         new_ths /= n_X
+
+        new_ths -= self.__L2_ths()
         self.ths = new_ths + self.__bp_momentum(new_ths)
 
     def __ng(self,X,Y):
@@ -175,6 +181,8 @@ class NN:
         # dropout 아직 구현 안 됨
         # 구현하려면 dropout_ths 구해야함
         assert self.DORATE == 0.0
+
+        # L2 Regularization 구현안됨
 
         ths = self.ths
         new_ths = ths.copy()
@@ -209,12 +217,30 @@ class NN:
     def batch_ngd(self,X,Y):
         self.ths = self.__ng(X,Y)
 
+    def __L2_cost(self):
+        return self.LAMBDA/2.0/self.m*\
+                sum((self.ths*np.invert(self.ths_b))**2)
+
+    def cost(self,y,withL2=False):
+
+        n_nodes = self.n_nodes
+        assert len(y) == n_nodes[-1]
+        oas = self.nas[-n_nodes[-1]:]   # output node_as
+        #cost = np.sum((oas-y)**2/2.0)  # quadratic
+        cost = -np.sum(y*np.log(oas)+(1-y)*np.log(1-oas)) # cross-entropy
+        if (withL2): cost += self.__L2_cost()
+
+        return cost
+
     def batch_cost(self,X,Y,testing=True):
         cost = 0.0
         n_X = len(X)
         for i in range(n_X):
             nn.ff(X[i],testing)
             cost += nn.cost(Y[i])/n_X
+
+        cost += self.__L2_cost()
+
         return cost
 
     def get_output(self):
@@ -223,14 +249,14 @@ class NN:
     def __get_ths(self,l,ths=None):
         ths_l = self.ths_l
         if (ths is None): ths=self.ths
-        return ths[ths_l[l-1]:ths_l[l]]
+        return ths[ths_l[l]:ths_l[l+1]]
 
     # return Matrix of thetas of layer l
     # Matrix: output neurons(rows)*input neurons(columns)
     def __get_thsM(self,l,ths=None):
         n_nodes = self.n_nodes
         if (ths is None): ths=self.ths 
-        return self.__get_ths(l,ths).reshape(n_nodes[l],-1)
+        return self.__get_ths(l,ths).reshape(n_nodes[l+1],-1)
 
     def __get_nzs(self,l,nzs=None):
         n_nodes_l = self.n_nodes_l
@@ -313,8 +339,6 @@ n_FEATURES = train_inputs.shape[1]
 train_outputs = np.zeros([m,n_LABELS])
 train_outputs[range(m),train_labels]=1.0
 
-# 뉴럴 네트워크 생성
-nn = NN(np.array([n_FEATURES,50,50,n_LABELS]))
 
 # 리턴: 출력 노드중 가장 큰 값의 번호
 #
@@ -326,20 +350,21 @@ def classify(x,testing=True):
 
     return l
 
+m = math.ceil(m/1) # 테스트 시에는 m을 작게
+m_test = math.ceil(m_test/1) # 테스트 시에는 m_test을 작게
+
 # 학습 이터레이션 설정
 #lmode = LMode.BATCH
 lmode = LMode.MINI_BATCH
 #lmode = LMode.STOCHASTIC
 MINI_BATCH_SIZE = max(2,math.ceil(m/1000))
 
-m = math.ceil(m/10) # 테스트 시에는 m을 작게
-m_test = math.ceil(m_test/10) # 테스트 시에는 m_test을 작게
-
+# 뉴럴 네트워크 생성
+nn = NN(np.array([n_FEATURES,100,100,n_LABELS]),m)
 count = 0
 while True:
 
     count += 1
-
     nn.set_dropout()
 
     # m 값만 바꾸면 train 대상 전체 집합 변경 가능하다.
@@ -366,7 +391,7 @@ while True:
     if (True):
         print ("#%d: %s"%(count,datetime.now()))
 
-    if (True):
+    if (False):
         print ("#%d: %.9f"%(count,
             nn.batch_cost(train_inputs[0:m],train_outputs[0:m])))
 
@@ -374,11 +399,18 @@ while True:
     # m_test 값만 바꾸면 test 대상 전체 집합 변경 가능하다.
     if (True):
         if (dset == DataSet.MNIST):
+            train_results = np.zeros(m)
+            for i in range(m):
+                train_results[i] = \
+                        (train_labels[i]==classify(train_inputs[i]))
+            train_accuracy = np.count_nonzero(train_results)/m
             test_results = np.zeros(m_test)
             for i in range(m_test):
-                test_results[i] = (test_labels[i]==classify(test_inputs[i]))
-            accuracy = np.count_nonzero(test_results)/m_test
-            print ("#%d: %.2f%%"%(count, accuracy*100))
+                test_results[i] = \
+                        (test_labels[i]==classify(test_inputs[i]))
+            test_accuracy = np.count_nonzero(test_results)/m_test
+            print ("#%d: %.2f%%, %.2f%%"%
+                    (count,train_accuracy*100,test_accuracy*100))
         else: # XOR
             for i in range(m_test):
                 print (test_inputs[i], test_labels[i], 
