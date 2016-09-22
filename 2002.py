@@ -30,10 +30,13 @@ class NN:
     nas = None # a of each nodes / without bias node
     nzs = None # z of each nodes
     dropout = None # dropout of each nodes
+
     # momentum 이용시 사용하는 이전 이터레이션의 ths 변화량
     ths_diff = None
+    ths_l = None # 레이어별 시작 위치
 
     n_nodes = None
+    n_nodes_l = None # 레이어별 시작 위치
 
     # n_nodes = [입력 노드수, 히든 레이어 #1 노드수, ..., 출력 노드수]
     def __init__(self,n_nodes):
@@ -46,6 +49,15 @@ class NN:
 
         #dropout
         self.set_dropout()
+
+        #성능을 올리기 위해서 미리 계산해 두는값들
+        self.n_nodes_l = np.empty(len(n_nodes)+1).astype(np.int)
+        for l in range(len(self.n_nodes_l)):
+            self.n_nodes_l[l] = sum(n_nodes[0:l])
+
+        self.ths_l = np.empty(len(n_nodes)).astype(np.int)
+        for l in range(len(self.ths_l)):
+            self.ths_l[l] = sum((n_nodes[0:l]+1)*n_nodes[1:l+1])
 
     # 드랍아웃될 유닛들 선택
     # 이미 설정되어 있으면 재선택
@@ -72,10 +84,10 @@ class NN:
         n_nodes = self.n_nodes
         assert len(x) == n_nodes[0]
 
-        self.nas[0:len(x)] = x # input node_a's
+        self.nas[0:n_nodes[0]] = x # input node_a's
 
         # pl_ : of previous (left) layer
-        pl_nas = np.append([1.0],self.nas[0:len(x)])
+        pl_nas = np.append([1.0],self.nas[0:n_nodes[0]])
         for l in range(1,len(n_nodes)):
 
             thsM = self.__get_thsM(l)
@@ -209,10 +221,9 @@ class NN:
         return self.__get_nas(len(self.n_nodes)-1)
 
     def __get_ths(self,l,ths=None):
-        n_nodes = self.n_nodes
+        ths_l = self.ths_l
         if (ths is None): ths=self.ths
-        return ths[sum((n_nodes[0:l-1]+1)*n_nodes[1:l]):
-            sum((n_nodes[0:l]+1)*n_nodes[1:l+1])]
+        return ths[ths_l[l-1]:ths_l[l]]
 
     # return Matrix of thetas of layer l
     # Matrix: output neurons(rows)*input neurons(columns)
@@ -222,19 +233,19 @@ class NN:
         return self.__get_ths(l,ths).reshape(n_nodes[l],-1)
 
     def __get_nzs(self,l,nzs=None):
-        n_nodes = self.n_nodes
+        n_nodes_l = self.n_nodes_l
         if (nzs is None): nzs=self.nzs
-        return nzs[sum(n_nodes[0:l]):sum(n_nodes[0:l+1])]
+        return nzs[n_nodes_l[l]:n_nodes_l[l+1]]
 
     def __get_nas(self,l,nas=None):
-        n_nodes = self.n_nodes
+        n_nodes_l = self.n_nodes_l
         if (nas is None): nas=self.nas
-        return nas[sum(n_nodes[0:l]):sum(n_nodes[0:l+1])]
+        return nas[n_nodes_l[l]:n_nodes_l[l+1]]
 
     def __get_dropout(self,l,dropout=None):
-        n_nodes = self.n_nodes
+        n_nodes_l = self.n_nodes_l
         if (dropout is None): dropout=self.dropout
-        return dropout[sum(n_nodes[0:l]):sum(n_nodes[0:l+1])]
+        return dropout[n_nodes_l[l]:n_nodes_l[l+1]]
 
     # 단순한 sigmoid 함수
     # z는 scalar 값 또는 ndarray
