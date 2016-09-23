@@ -23,9 +23,9 @@ np.random.seed(20160920) # 디버깅 및 논의를 쉽게 하기 위해서 지�
 class NN:
 
     LR = 0.2 # Learning Rate
-    DORATE = 0.0 # Dropout Rate
-    MOMENTUM = 0.5 # Momentum
-    LAMBDA = 2.0 # L2 Regularization Parameter
+    DORATE = 1.0 # Dropout Rate
+    MOMENTUM = 0.0 # Momentum
+    LAMBDA = 1.0 # L2 Regularization Parameter
 
     ths = None # thetas
     nas = None # a of each nodes / without bias node
@@ -65,7 +65,7 @@ class NN:
             self.ths_l[l] = sum((n_nodes[0:l]+1)*n_nodes[1:l+1])
             if (l<len(self.ths_l)-1):
                 self.ths_b[self.ths_l[l]+\
-                        np.arange(n_nodes[l+1])*n_nodes[l]] = True
+                        np.arange(n_nodes[l+1])*(n_nodes[l]+1)] = True
 
         # 전체 학습 예제수
         self.m = m
@@ -285,6 +285,20 @@ class NN:
     def __d_sigmoid(self,a):
         return a*(1.0-a)
 
+    def print_ths(self):
+        n_nodes = self.n_nodes
+        for l in range(0,len(n_nodes)-1):
+            thsM = self.__get_thsM(l)
+            print ("layer #%d<-%d"%(l+1,l))
+            print (thsM)
+
+    def print_dropout(self):
+        n_nodes = self.n_nodes
+        for l in range(0,len(n_nodes)):
+            dropout = self.__get_dropout(l)
+            print ("layer #%d"%l)
+            print (dropout)
+
 ##############################
 # 학습/테스트 데이터 관련 설정
 ##############################
@@ -299,8 +313,8 @@ LMode = Enum('LearnMode', 'BATCH MINI_BATCH STOCHASTIC')
 DataSet = Enum('DataSet', 'MNIST XOR')
 
 # 사용할 데이터 선택
-#dset = DataSet.XOR
-dset = DataSet.MNIST
+dset = DataSet.XOR
+#dset = DataSet.MNIST
 
 if (dset == DataSet.MNIST):
 
@@ -360,12 +374,26 @@ lmode = LMode.MINI_BATCH
 MINI_BATCH_SIZE = max(2,math.ceil(m/1000))
 
 # 뉴럴 네트워크 생성
-nn = NN(np.array([n_FEATURES,100,100,n_LABELS]),m)
-count = 0
+nn = NN(np.array([n_FEATURES,2,n_LABELS]),m)
+epoch = 0
 while True:
 
-    count += 1
+    epoch += 1
     nn.set_dropout()
+
+    # epoch 시작 출력
+    if (True):
+        if (True and dset == DataSet.XOR):
+            time.sleep(1)
+            print ("#"*32)
+            print ("#%d: %s"%(epoch,datetime.now()))
+            print ("#"*32)
+            print ("Train started with following conditions:")
+            print ("dropout:")
+            nn.print_dropout()
+            print ("ths:")
+            nn.print_ths()
+
 
     # m 값만 바꾸면 train 대상 전체 집합 변경 가능하다.
     if (lmode == LMode.STOCHASTIC):
@@ -387,12 +415,14 @@ while True:
         #nn.batch_ngd(train_inputs,train_outputs)
         nn.batch_bp(train_inputs[0:m],train_outputs[0:m])
 
-    # 현재 학습 상황 출력
-    if (True):
-        print ("#%d: %s"%(count,datetime.now()))
+    # 학습된 결과 출력
+    if (True and dset == DataSet.XOR):
+        print ("Train completed with following thetas:")
+        print ("ths:")
+        nn.print_ths()
 
     if (False):
-        print ("#%d: %.9f"%(count,
+        print ("#%d: %.9f"%(epoch,
             nn.batch_cost(train_inputs[0:m],train_outputs[0:m])))
 
     # 테스트 및 그 결과 출력
@@ -410,7 +440,7 @@ while True:
                         (test_labels[i]==classify(test_inputs[i]))
             test_accuracy = np.count_nonzero(test_results)/m_test
             print ("#%d: %.2f%%, %.2f%%"%
-                    (count,train_accuracy*100,test_accuracy*100))
+                    (epoch,train_accuracy*100,test_accuracy*100))
         else: # XOR
             for i in range(m_test):
                 print (test_inputs[i], test_labels[i], 
