@@ -27,10 +27,15 @@ np.set_printoptions(formatter={'float_kind':float_formatter})
 #
 class NN:
 
-    LRINIT = 1.0 # Initial Learning Rate
-    LRDF = 0.01 # Learning Rate Decaying Factor
+    AF = Enum('ActivateFunction', 'SIGMOID RELU LRELU')
+    #af = AF.SIGMOID
+    #af = AF.RELU
+    af = AF.LRELU
+
+    LRINIT = 0.005 # Initial Learning Rate
+    LRDF = 0.00 # Learning Rate Decaying Factor
     DORATE = 0.0 # Dropout Rate
-    MOMENTUM = 0.75 # Momentum
+    MOMENTUM = 0.5 # Momentum
     LAMBDA = 0.0 # L2 Regularization Parameter
 
     lr = LRINIT # current learning rate
@@ -52,6 +57,9 @@ class NN:
     n_nodes_l = None # 레이어별 시작 위치
 
     m = 0 # L2 Regularization 등에서 사용하는 전체 학습 예제수
+
+    activate = None # activation function
+    d_activate = None # activation function의 deravative
 
     # n_nodes = [입력 노드수, 히든 레이어 #1 노드수, ..., 출력 노드수]
     def __init__(self,n_nodes,m):
@@ -82,6 +90,17 @@ class NN:
 
         # dropout
         self.set_dropout()
+
+        # Activation Functions
+        if (self.af == self.AF.RELU):
+            self.activate = self.__relu
+            self.d_activate = self.__d_relu
+        elif (self.af == self.AF.LRELU):
+            self.activate = self.__lrelu
+            self.d_activate = self.__d_lrelu
+        else:
+            self.activate = self.__sigmoid
+            self.d_activate = self.__d_sigmoid
 
     # 드랍아웃될 유닛들 선택
     # 이미 설정되어 있으면 재선택
@@ -129,7 +148,15 @@ class NN:
             nas = self.__get_nas(l)
 
             nzs[:] = np.dot(thsM,pl_nas)
-            nas[:] = self.__sigmoid(nzs)
+
+            # 코스트 함수로 cross-entropy를 사용하기 위해서 
+            # 마지막 레이어는 sigmoid로 처리해야함
+            # 코스트 함수로 quadric을 사용하려면
+            # 마지막 레이어는 activate 함수 사용을 하지 말아야 함
+            if (l<len(n_nodes)-1):
+                nas[:] = self.activate(nzs)
+            else:
+                nas[:] = self.__sigmoid(nzs)
 
             # 드랍아웃 사용시에는 traing 하고 testing 할때 각각
             # 계산방법이 다르다.
@@ -157,19 +184,20 @@ class NN:
             nas = self.__get_nas(l)
 
             if (l == len(n_nodes)-1):
-                #deltas = (nas-y)*nas*(1.0-nas) # quadratic
+                #deltas = (nas-y)*self.__d_sigmoid(nas) # quadratic
                 deltas = (nas-y) # cross-entropy
             else:
                 nl_thsM = self.__get_thsM(l,ths_all)
                 deltas = np.dot(nl_thsM[:,1:].T,nl_deltas)*\
-                        nas*(1.0-nas)
-
+                        self.d_activate(nas)
+                 
             pl_nas = self.__get_nas(l-1)
             pl_nas = np.append([1.0],pl_nas) # add bias node
 
-            new_thsM -= np.invert(ths_dM) *\
+            d_new_thsM = np.invert(ths_dM) *\
                 self.lr*np.dot(deltas.reshape(len(deltas),-1),
                 pl_nas.reshape(-1,len(pl_nas)))
+            new_thsM -= d_new_thsM
 
             nl_deltas = deltas
 
@@ -322,9 +350,29 @@ class NN:
     def __d_sigmoid(self,a):
         return a*(1.0-a)
 
+    def __relu(self,z):
+        return z*(z>0)
+
+    def __d_relu(self,z):
+        return (z>0).astype(np.float)
+
+    LEAKYF=0.1
+    def __lrelu(self,z):
+        return (z*(z>=0)+(self.LEAKYF*z)*(z<0))
+
+    def __d_lrelu(self,z):
+        return (z>=0)*1.0+(self.LEAKYF)*(z<0)
+
+    def print_nas(self):
+        n_nodes = self.n_nodes
+        for l in range(len(n_nodes)):
+            nas = self.__get_nas(l)
+            print ("layer #%d"%l)
+            print (nas)
+
     def print_ths(self):
         n_nodes = self.n_nodes
-        for l in range(0,len(n_nodes)-1):
+        for l in range(len(n_nodes)-1):
             thsM = self.__get_thsM(l)
             print ("layer #%d<-%d"%(l+1,l))
             print (thsM)
@@ -401,18 +449,18 @@ def classify(x):
 
     return l
 
-m = math.ceil(m) # 테스트 시에는 m을 작게
-m_test = math.ceil(m_test) # 테스트 시에는 m_test을 작게
+m = math.ceil(m/10) # 테스트 시에는 m을 작게
+m_test = math.ceil(m_test/10) # 테스트 시에는 m_test을 작게
 
 # 학습 이터레이션 설정
 #lmode = LMode.BATCH
 lmode = LMode.MINI_BATCH
 #lmode = LMode.STOCHASTIC
 #lmode = LMode.ONE_PER_EPOCH # 테스트용
-MINI_BATCH_SIZE = max(2,math.ceil(m/100))
+MINI_BATCH_SIZE = 50 
 
 # 뉴럴 네트워크 생성
-nn = NN(np.array([n_FEATURES,50,25,n_LABELS]),m)
+nn = NN(np.array([n_FEATURES,50,10,10,10,10,10,10,10,n_LABELS]),m)
 epoch = 0
 
 while True:
@@ -425,7 +473,7 @@ while True:
     # epoch 시작 출력
     if (True):
         if (True and dset == DataSet.XOR):
-            time.sleep(1)
+            time.sleep(0.5)
             print ("#"*32)
             print ("#%d: %s"%(epoch,datetime.now()))
             print ("#"*32)
@@ -435,6 +483,8 @@ while True:
             nn.print_dropout()
             print ("ths:")
             nn.print_ths()
+        else:
+            print ("#%d"%epoch)
 
     # 학습 중에는 dropout 실행
     nn.doDropout = True
@@ -466,13 +516,13 @@ while True:
         nn.batch_bp(train_inputs[0:m],train_outputs[0:m])
 
     # 학습된 결과 출력
-    if (True and dset == DataSet.XOR):
-        print ("Train completed with following thetas:")
+    if (False and dset == DataSet.XOR):
+        print ("Train completed")
         print ("ths:")
         nn.print_ths()
 
     if (False):
-        print ("#%d: %.9f"%(epoch,
+        print ("batch_cost: %.9f"%(epoch,
             nn.batch_cost(train_inputs[0:m],train_outputs[0:m])))
 
     # 테스트 및 그 결과 출력
@@ -490,9 +540,11 @@ while True:
                 test_results[i] = \
                         (test_labels[i]==classify(test_inputs[i]))
             test_accuracy = np.count_nonzero(test_results)/m_test
-            print ("#%d: %.3f%%, %.3f%%"%
-                    (epoch,train_accuracy*100,test_accuracy*100))
+            print ("accuracy: train:%.3f%%, test:%.3f%%"%
+                    (train_accuracy*100,test_accuracy*100))
         else: # XOR
+            print ("test results:")
             for i in range(m_test):
                 print (test_inputs[i], test_labels[i], 
                         classify(test_inputs[i]))
+
