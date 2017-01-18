@@ -3,17 +3,30 @@ import numpy as np
 #
 RAND_MAX = 1
 
+
+def threshold(z: np.ndarray):
+    return (z > 0.5).astype(np.float)
+
+
+def sigmoid(z: np.ndarray):
+    return 1 / (1 + np.exp(-z))
+
+
 # train set: XOR
 # train_x = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
 # train_y = np.array([[0], [1], [1], [0]])
+# last_function = threshold
 
 # train set: unknown function
-# train_x = np.array([0, 1, 2, 5, 9, 11, 15])
-# train_y = np.array([0, 1, 0, 1, 1, 1, 0])
+train_x = np.array([0, 1, 2, 5, 9, 11, 15])
+train_y = np.array([0, 1, 0, 1, 1, 1, 0])
+last_function = threshold
 
 # train set: SIN function
-train_x = np.array([0, 1, 2, 5, 9, 11, 15])
-train_y = np.sin(train_x)
+# train_x = np.array([0, 1, 2, 5, 9, 11, 15])
+# train_y = np.sin(train_x)
+# last_function = np.array
+
 
 #
 train_x = train_x.reshape(len(train_x), -1)
@@ -26,14 +39,6 @@ m = train_x.shape[0]
 n_input_layer = train_x.shape[1]
 n_hidden_layer = 30
 n_output_layer = train_y.shape[1]
-
-
-def threshold(z: np.ndarray):
-    return (z > 0.5).astype(np.float)
-
-
-def sigmoid(z: np.ndarray):
-    return 1 / (1 + np.exp(-z))
 
 
 # activate = threshold
@@ -54,7 +59,6 @@ while True:
 
     w0 = None
     w1 = None
-    w2 = None
 
     for i in range(m):
 
@@ -77,8 +81,7 @@ while True:
         output_layer_z = np.dot(add_bias(hidden_layer_a), w1)
         output_layer_a = activate(output_layer_z)
 
-        # y_pred = threshold(output_layer_a)
-        y_pred = np.array(output_layer_a)
+        y_pred = last_function(output_layer_a)
 
         #
         y_true = train_y[i]
@@ -90,7 +93,7 @@ while True:
         print("epoch #: {}, example #: {}, x: {}, y_true: {}, y: {}".format(
             epoch, i, train_x[i], y_true, y_pred))
 
-    correct_prediction = np.sum(preds == train_y) / m
+    correct_prediction = np.sum(np.abs(preds - train_y) < 0.01) / m
 
     print("epoch #: {}, correct result: {:5.3f}%, loss: {:6.3f}".format(
         epoch, correct_prediction * 100, loss))
