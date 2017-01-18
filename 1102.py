@@ -1,7 +1,7 @@
 import numpy as np
 
 #
-RAND_MAX = 1
+RAND_MAX = 10
 
 #
 PRINT_STATUS_PER_EPOCHS = 100
@@ -135,7 +135,7 @@ def back_propagation(x, w, y_true):
 
 
 def loss(y_pred: np.ndarray, y_true:np.ndarray):
-    return np.sum((y_pred - y_true) ** 2)
+    return np.sum((y_pred - y_true) ** 2) / 2
 
 epoch = 0
 
@@ -163,14 +163,14 @@ while True:
         my_y_true = train_y[i]
 
         #
-        # my_new_w_ngd = num_grad_desc(my_x, my_w, my_y_true)
+        my_new_w_ngd = num_grad_desc(my_x, my_w, my_y_true)
         my_new_w_bp = back_propagation(my_x, my_w, my_y_true)
 
         # print(my_new_w_ngd)
         # print(my_new_w_bp)
-        # print(my_new_w_ngd - my_new_w_bp)
+        print(my_new_w_ngd - my_new_w_bp < 0.001)
 
-        my_new_w[i] = my_new_w_bp
+        my_new_w[i] = my_new_w_ngd
 
         #
         _, _, my_y_pred = feed_forward(train_x[i], my_w)
