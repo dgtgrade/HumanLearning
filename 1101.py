@@ -1,7 +1,7 @@
 import numpy as np
 
 #
-RAND_MAX = 10
+RAND_MAX = 1
 
 # train set
 train_x = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
@@ -18,7 +18,7 @@ n_output_layer = train_y.shape[1]
 
 
 def threshold(z: np.ndarray):
-    return (z > 0).astype(np.float)
+    return (z > 0.5).astype(np.float)
 
 activate = threshold
 
@@ -68,15 +68,17 @@ while True:
         output_layer_z = np.dot(add_bias(hidden_layer2_a), w2)
         output_layer_a = activate(output_layer_z)
 
+        #
         pred_y[i] = output_layer_a
+        loss += np.sum((output_layer_z - train_y) ** 2)
 
         print("epoch #: {}, example #: {}, x: {}, y_true: {}, y: {}".format(
             epoch, i, train_x[i], train_y[i], output_layer_a))
 
     correct_prediction = np.sum(pred_y == train_y) / m
 
-    print("epoch #: {}, correct result: {:5.3f}%".format(
-        epoch, correct_prediction * 100))
+    print("epoch #: {}, correct result: {:5.3f}%, loss: {:10.3f}".format(
+        epoch, correct_prediction * 100, loss))
 
     if correct_prediction == 1.0:
         print("w0:")
