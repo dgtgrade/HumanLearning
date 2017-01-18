@@ -17,11 +17,11 @@ np.set_printoptions(formatter={'float_kind':float_formatter})
 # train_y = np.array([[0], [1], [1], [0]])
 
 # train set: unknown function
-# train_x = np.array([0, 1, 2, 5, 9, 11, 15])
+# train_x = np.array([0, 1, 2, 5, 7, 8, 9])
 # train_y = np.array([0, 1, 0, 1, 1, 1, 0])
 
 # train set: SIN function
-train_x = np.array([0, 1, 2, 5, 9, 11, 15])
+train_x = np.array([0, 1, 2, 3, 6, 8])
 train_y = np.sin(train_x)
 
 #
@@ -90,7 +90,7 @@ def feed_forward(x, w):
     return x, hidden_layer_a, out
 
 
-learning_rate = 0.1
+learning_rate = 0.05
 
 
 def num_grad_desc(x, w, y_true):
@@ -180,8 +180,8 @@ while True:
         preds[i] = my_y_pred
 
         if epoch % PRINT_STATUS_PER_EPOCHS == 0:
-            print("epoch #: {}, example #: {}, x: {}, y_true: {}, y: {}".format(
-                epoch, i, train_x[i], my_y_true, my_y_pred))
+            print("epoch #: {}, example #: {}, x: {}, y_true: {}, y_pred: {}, y_diff: {}".format(
+                epoch, i, train_x[i], my_y_true, my_y_pred, my_y_pred - my_y_true))
 
     my_w = np.average(my_new_w, axis=0)
     my_w0, my_w1 = roll(my_w)
