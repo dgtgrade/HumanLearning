@@ -163,14 +163,14 @@ while True:
         my_y_true = train_y[i]
 
         #
-        my_new_w_ngd = num_grad_desc(my_x, my_w, my_y_true)
+        # my_new_w_ngd = num_grad_desc(my_x, my_w, my_y_true)
         my_new_w_bp = back_propagation(my_x, my_w, my_y_true)
 
         # print(my_new_w_ngd)
         # print(my_new_w_bp)
-        print(my_new_w_ngd - my_new_w_bp < 0.001)
+        # print(my_new_w_ngd - my_new_w_bp < 0.001)
 
-        my_new_w[i] = my_new_w_ngd
+        my_new_w[i] = my_new_w_bp
 
         #
         _, _, my_y_pred = feed_forward(train_x[i], my_w)
