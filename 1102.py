@@ -9,7 +9,7 @@ PRINT_STATUS_PER_EPOCHS = 100
 
 #
 float_formatter = lambda x: "%+.6f" % x
-np.set_printoptions(formatter={'float_kind':float_formatter})
+np.set_printoptions(formatter={'float_kind': float_formatter})
 
 
 # train set: XOR
@@ -134,7 +134,7 @@ def back_propagation(x, w, y_true):
     return new_w
 
 
-def loss(y_pred: np.ndarray, y_true:np.ndarray):
+def loss(y_pred: np.ndarray, y_true: np.ndarray):
     return np.sum((y_pred - y_true) ** 2) / 2
 
 epoch = 0
@@ -156,11 +156,11 @@ while True:
     my_w = unroll(my_w0, my_w1)
     my_new_w = np.empty((m, unroll(my_w0, my_w1).size))
 
-    for i in range(m):
+    for my_i in range(m):
 
         #
-        my_x = train_x[i]
-        my_y_true = train_y[i]
+        my_x = train_x[my_i]
+        my_y_true = train_y[my_i]
 
         #
         # my_new_w_ngd = num_grad_desc(my_x, my_w, my_y_true)
@@ -170,18 +170,18 @@ while True:
         # print(my_new_w_bp)
         # print(my_new_w_ngd - my_new_w_bp < 0.001)
 
-        my_new_w[i] = my_new_w_bp
+        my_new_w[my_i] = my_new_w_bp
 
         #
-        _, _, my_y_pred = feed_forward(train_x[i], my_w)
+        _x, _h, my_y_pred = feed_forward(train_x[my_i], my_w)
 
         #
         total_loss += loss(my_y_pred, my_y_true)
-        preds[i] = my_y_pred
+        preds[my_i] = my_y_pred
 
         if epoch % PRINT_STATUS_PER_EPOCHS == 0:
             print("epoch #: {}, example #: {}, x: {}, y_true: {}, y_pred: {}, y_diff: {}".format(
-                epoch, i, train_x[i], my_y_true, my_y_pred, my_y_pred - my_y_true))
+                epoch, my_i, train_x[my_i], my_y_true, my_y_pred, my_y_pred - my_y_true))
 
     my_w = np.average(my_new_w, axis=0)
     my_w0, my_w1 = roll(my_w)
@@ -199,4 +199,3 @@ while True:
         print("w1:")
         print(my_w1)
         break
-
