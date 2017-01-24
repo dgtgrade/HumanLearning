@@ -205,7 +205,7 @@ while True:
     correct_prediction = np.array(np.abs(preds - train_y) < 0.01)
     correct_result = np.sum(correct_prediction) / m
 
-    if epoch % PRINT_STATUS_PER_EPOCHS == 0:
+    if correct_result == 1.0 or epoch % PRINT_STATUS_PER_EPOCHS == 0:
         print("epoch #: {}, correct result: {:5.3f}%, loss: {:8.5f}".format(
             epoch, correct_result * 100, total_loss))
 
