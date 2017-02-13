@@ -93,7 +93,7 @@ while True:
         print("epoch #: {}, example #: {}, x: {}, y_true: {}, y: {}".format(
             epoch, i, train_x[i], y_true, y_pred))
 
-    correct_prediction = np.sum(np.abs(preds - train_y) < 0.01) / m
+    correct_prediction = np.sum(np.array(np.abs(preds - train_y) < 0.01, dtype=np.int)) / m
 
     print("epoch #: {}, correct result: {:5.3f}%, loss: {:6.3f}".format(
         epoch, correct_prediction * 100, loss))
@@ -104,4 +104,3 @@ while True:
         print("w1:")
         print(w1)
         break
-
