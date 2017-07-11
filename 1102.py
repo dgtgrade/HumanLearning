@@ -38,10 +38,6 @@ n_hidden_layer_1 = 50
 n_output_layer = train_y.shape[1]
 
 
-def threshold(z: np.ndarray):
-    return (z > 0.5).astype(np.float)
-
-
 def sigmoid(z: np.ndarray):
     return 1 / (1 + np.exp(-z))
 
@@ -49,8 +45,17 @@ def sigmoid(z: np.ndarray):
 def d_sigmoid(a: np.ndarray):
     return a * (1.0 - a)
 
-# activate = threshold
+
+def ReLU(z: np.ndarray):
+    return np.maximum(z, 0)
+
+
+def d_ReLU(a: np.ndarray):
+    return (a > 0).astype(np.float)
+
+
 activate = sigmoid
+d_activate = d_sigmoid
 
 
 def add_bias(a):
@@ -100,7 +105,7 @@ def feed_forward(x, w):
     return x, hidden_layer_0_a, hidden_layer_1_a, out
 
 
-learning_rate = 0.0001
+learning_rate = 0.001
 
 
 def num_grad_desc(x, w, y_true):
@@ -133,14 +138,14 @@ def back_propagation(x, w, y_true):
     a1 = add_bias(a1)
     a2 = add_bias(a2)
 
-#    delta3 = (a3 - y_true)*d_sigmoid(a3)
+#    delta3 = (a3 - y_true)*d_activate(a3)
     delta3 = (a3 - y_true)
     new_w2 = tmp_w2 - learning_rate * np.dot(a2.reshape(-1, 1), delta3.reshape(-1, 1).T)
 
-    delta2 = (np.dot(tmp_w2, delta3) * d_sigmoid(a2))[1:]
+    delta2 = (np.dot(tmp_w2, delta3) * d_activate(a2))[1:]
     new_w1 = tmp_w1 - learning_rate * np.dot(a1.reshape(-1, 1), delta2.reshape(-1, 1).T)
 
-    delta1 = (np.dot(tmp_w1, delta2) * d_sigmoid(a1))[1:]
+    delta1 = (np.dot(tmp_w1, delta2) * d_activate(a1))[1:]
     new_w0 = tmp_w0 - learning_rate * np.dot(a0.reshape(-1, 1), delta1.reshape(-1, 1).T)
 
     new_w = unroll(new_w0, new_w1, new_w2)
