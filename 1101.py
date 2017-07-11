@@ -1,7 +1,7 @@
 import numpy as np
 
 #
-RAND_MAX = 1
+RAND_MAX = 10
 
 
 def threshold(z: np.ndarray):
@@ -13,14 +13,14 @@ def sigmoid(z: np.ndarray):
 
 
 # train set: XOR
-# train_x = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-# train_y = np.array([[0], [1], [1], [0]])
-# last_function = threshold
+train_x = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+train_y = np.array([[0], [1], [1], [0]])
+last_function = threshold
 
 # train set: unknown function
-train_x = np.array([0, 1, 2, 5, 9, 11, 15])
-train_y = np.array([0, 1, 0, 1, 1, 1, 0])
-last_function = threshold
+# train_x = np.array([0, 1, 2, 5, 9, 11, 15])
+# train_y = np.array([0, 1, 0, 1, 1, 1, 0])
+# last_function = threshold
 
 # train set: SIN function
 # train_x = np.array([0, 1, 2, 5, 9, 11, 15])
@@ -57,25 +57,22 @@ while True:
     preds = np.empty(train_y.shape)
     loss = 0
 
-    w0 = None
-    w1 = None
+    # connections between input layer and hidden layer
+    w0 = np.random.random(size=(n_input_layer + 1, n_hidden_layer))
+    w0 = (w0 * 2 - 1) * RAND_MAX
+
+    # connections between hidden layer and output layer
+    w1 = np.random.random(size=(n_hidden_layer + 1, n_output_layer))
+    w1 = (w1 * 2 - 1) * RAND_MAX
 
     for i in range(m):
 
         # input layer
         input_layer = train_x[i]
 
-        # connections between input layer and hidden layer
-        w0 = np.random.random(size=(n_input_layer + 1, n_hidden_layer))
-        w0 = (w0 * 2 - 1) * RAND_MAX
-
         # hidden layer
         hidden_layer_z = np.dot(add_bias(input_layer), w0)
         hidden_layer_a = activate(hidden_layer_z)
-
-        # connections between hidden layer and output layer
-        w1 = np.random.random(size=(n_hidden_layer + 1, n_output_layer))
-        w1 = (w1 * 2 - 1) * RAND_MAX
 
         # output layer
         output_layer_z = np.dot(add_bias(hidden_layer_a), w1)
